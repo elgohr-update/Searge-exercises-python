@@ -4,14 +4,14 @@ Exercise tesing utils
 import importlib
 import io
 from contextlib import contextmanager
+from typing import Any, Iterator, ContextManager
 from unittest.mock import patch
 
 import asserts
 
-
 __all__ = (
     'assert_equal',
-    'expect_output',
+    'test_output',
     'TestEnv',
 )
 
@@ -26,7 +26,7 @@ def assert_equal(actual: object, expected: object) -> None:
 
 
 @contextmanager
-def _check_output(expected: str) -> object:
+def _check_output(expected: str) -> Iterator[None]:
     '''
     Returns a Context Manager that will capture all the output
     and match that output with expected one.
@@ -38,7 +38,7 @@ def _check_output(expected: str) -> object:
     print(actual)
 
 
-def expect_output(expected: str) -> None:
+def test_output(expected: str) -> None:
     '''
     Imports an "index" module and checks its output
     '''
@@ -50,6 +50,7 @@ class TestEnv(object):
     '''
     Context manager that inspects user defined module
     '''
+
     def __init__(self):
         self.module = importlib.import_module('index')
 
@@ -57,9 +58,9 @@ class TestEnv(object):
         return self
 
     def __exit__(self, *args):
-        return True
+        pass
 
-    def expect_defined(self, name: str) -> None:
+    def expect_defined(self, name: str) -> Any:
         '''
         Asserts that module defines the @name. Returns a value of definition
         '''
@@ -71,6 +72,13 @@ class TestEnv(object):
         Assertss that module defines the @name and name has a @value
         '''
         assert_equal(self.expect_defined(name), value)
+
+    @staticmethod
+    def expect_output(expected: str) -> ContextManager:
+        '''
+        Provides a context, that captures and checks  all the output
+        '''
+        return _check_output(expected)
 
 
 if __name__ == '__main__':
